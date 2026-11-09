@@ -11,10 +11,7 @@ export const registerSW = async () => {
   const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
   if (!('serviceWorker' in navigator)) return;
 
-  const wispUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/wisp/`;
-  if (await connection.getTransport() !== '/epoxy/index.mjs') {
-    await connection.setTransport('/epoxy/index.mjs', [{ wisp: wispUrl }]);
-  }
+  await connection.setTransport('/proxy/transport.mjs', [{ base: location.origin }]);
   await navigator.serviceWorker.register('/uv/sw.js', {
     scope: __uv$config.prefix
   }).catch(() => window.logger.error('Failed to register UV serviceWorker.'));

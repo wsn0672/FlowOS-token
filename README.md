@@ -85,6 +85,17 @@ To get a local copy up and running follow these simple example steps.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+### Proxy logs and PM2
+
+The public site uses port **3743** without a password. The password-free log viewer
+uses **127.0.0.1:3744**. Proxy requests are forwarded and logged on the server;
+HTTP bodies and WebSocket messages are never stored. Logs default to
+`/mnt/timemachine/flowos-logs` on the mounted sda1 volume.
+
+See [Ubuntu / PM2 setup](docs/PM2.md) for storage preparation, HTTPS/proxy settings,
+SSH access to the viewer, boot persistence, and the exact logging scope.
+For local development, use `PROXY_LOG_DIR=/tmp/flowos-logs npm start`.
+
 <!-- CONTRIBUTING -->
 ## Contributing
 

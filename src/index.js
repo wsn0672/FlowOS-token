@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
-import wisp from 'wisp-server-node';
+import { createProxyLogs } from './proxyLogs.js';
+import { installProxy } from './proxy.js';
+import { createAdminApp } from './admin.js';
 
 import { uvPath } from '@titaniumnetwork-dev/ultraviolet';
-import { epoxyPath } from '@mercuryworkshop/epoxy-transport';
 import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
 
 import { exec } from 'child_process';
@@ -13,18 +14,21 @@ import fs from 'fs';
 
 const publicPath = './public';
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 3743;
 
 const app = express();
-const server = createServer(app);
+const server = createServer({ maxHeaderSize: 65536 }, app);
 
 // Only trust explicitly configured proxy addresses, never arbitrary forwarded headers.
 if (process.env.TRUST_PROXY) {
   app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
 }
+const logs = createProxyLogs();
+installProxy(app, server, logs);
+const adminServer = createServer(createAdminApp(logs));
+adminServer.listen(Number(process.env.ADMIN_PORT || 3744), process.env.ADMIN_HOST || '127.0.0.1');
 app.use('/', express.static(publicPath));
 app.use('/uv/', express.static(uvPath));
-app.use('/epoxy/', express.static(epoxyPath));
 app.use('/baremux/', express.static(baremuxPath));
 
 // Add a route handler for the root path
@@ -52,12 +56,22 @@ app.get('/ver', (req, res) => {
   });
 });
 
-server.on('upgrade', (req, socket, head) => {
-  wisp.routeRequest(req, socket, head);
-});
-
 server.on('listening', () => {
   console.log(`Listening on: http://localhost:${port}`);
 });
 
-server.listen({ port, hostname: '127.0.0.1' });
+server.listen({ port: Number(port), host: process.env.HOST || '0.0.0.0' });
+
+for (const running of [server, adminServer]) {
+  running.on('error', error => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+function shutdown () {
+  server.close();
+  adminServer.close();
+  setTimeout(() => process.exit(0), 5000).unref();
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

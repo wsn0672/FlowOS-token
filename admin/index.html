@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FlowOS 通信ログ</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body><header><span class="brand">FLOW OS</span><h1>通信ログ</h1><p>IPアドレスごとのアクセス先とHTTPメタデータ</p></header>
+<main><section class="controls"><label>日付（UTC）<input type="date" id="day"></label><label>利用者のIP<select id="ip"><option value="">選択してください</option></select></label><label>絞り込み<input type="search" id="filter" placeholder="サイト名・メソッド"></label><button id="refresh">更新</button></section>
+<p class="notice">リクエスト・レスポンスの本文やWebSocketメッセージは保存しません。認証情報のヘッダーは伏せ字で表示されます。</p>
+<p id="status" role="status">読み込み中…</p><section id="records" aria-label="通信一覧"></section><button id="older" hidden>以前のログを読み込む</button></main>
+</body></html>
