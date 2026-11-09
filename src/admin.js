@@ -1,7 +1,7 @@
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 
-export function createAdminApp (logs) {
+export function createAdminApp (logs, traffic) {
   const app = express();
   app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
@@ -12,6 +12,11 @@ export function createAdminApp (logs) {
     const allowed = (process.env.ADMIN_ALLOWED_HOSTS || 'localhost,127.0.0.1,::1,[::1]').split(',').map(value => value.trim());
     if (!allowed.includes(host) || req.get('sec-fetch-site') === 'cross-site') return res.sendStatus(403);
     next();
+  });
+  app.get('/api/statistics', (req, res) => {
+    if (!traffic) return res.sendStatus(503);
+    if (req.query.ip !== undefined && (typeof req.query.ip !== 'string' || req.query.ip.length > 64)) return res.sendStatus(400);
+    res.json(traffic.statistics(String(req.query.day || ''), req.query.ip));
   });
   app.get('/api/users', (req, res) => res.json(logs.users(String(req.query.day || ''))));
   app.get('/api/logs', (req, res) => {

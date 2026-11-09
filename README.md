@@ -89,7 +89,11 @@ To get a local copy up and running follow these simple example steps.
 
 The public site uses port **3743** without a password. The password-free log viewer
 uses **127.0.0.1:3744**. Proxy requests are forwarded and logged on the server;
-HTTP bodies and WebSocket messages are never stored. Logs default to
+HTTP bodies and WebSocket messages are never stored. A separate statistics tab
+shows per-IP/site request counts and transferred GB. Each IP gets 3 GB per Japan
+calendar day, then shares a 1 Mbps upload/download limit across all connections.
+The desktop includes a usage meter and four app shortcuts; opening the browser
+first shows a logging notice. Logs default to
 `/mnt/timemachine/flowos-logs` on the mounted sda1 volume.
 
 See [Ubuntu / PM2 setup](docs/PM2.md) for storage preparation, HTTPS/proxy settings,

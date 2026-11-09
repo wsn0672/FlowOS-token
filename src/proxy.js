@@ -40,7 +40,7 @@ function rawHeaders (raw) {
   return result;
 }
 
-export function installProxy (app, server, logs, { allowPrivateTargets = false } = {}) {
+export function installProxy (app, server, logs, { allowPrivateTargets = false, traffic } = {}) {
   app.post('/proxy/http', (req, res) => {
     const ip = getClientIP(req, app);
     let url, meta, headers;
@@ -52,6 +52,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
     } catch {
       return res.status(400).send('Invalid proxy request.');
     }
+    const controller = new AbortController();
     const entry = { requestId: randomUUID(), type: 'http-request', url: url.href, method: meta.method, headers };
     let upstream;
     try {
@@ -74,11 +75,15 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
         res.set('x-flowos-response', Buffer.from(JSON.stringify(metadata)).toString('base64url'));
         res.set('content-type', 'application/octet-stream');
         res.set('cache-control', 'no-store');
-        const streams = decoder && meta.method.toUpperCase() !== 'HEAD' ? [response, decoder, res] : [response, res];
+        const streams = [response];
+        if (decoder && meta.method.toUpperCase() !== 'HEAD') streams.push(decoder);
+        if (traffic) streams.push(traffic.stream(ip, url, 'download', controller.signal));
+        streams.push(res);
         pipeline(...streams, () => {});
       });
       entry.headers = upstream.getHeaders();
       logs.write(ip, entry);
+      traffic?.request(ip, url);
     } catch (error) {
       upstream?.destroy();
       console.error('Proxy request/log error:', error.message);
@@ -90,9 +95,10 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
       if (!res.headersSent) res.status(502).send('Upstream request failed.');
       else res.destroy();
     });
-    req.on('aborted', () => upstream.destroy());
-    res.on('close', () => { if (!res.writableFinished) upstream.destroy(); });
-    req.pipe(upstream);
+    req.on('aborted', () => { controller.abort(); upstream.destroy(); });
+    res.on('close', () => { controller.abort(); if (!res.writableFinished) upstream.destroy(); });
+    if (traffic) pipeline(req, traffic.stream(ip, url, 'upload', controller.signal), upstream, () => {});
+    else req.pipe(upstream);
   });
 
   const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 * 1024, perMessageDeflate: false });
@@ -109,6 +115,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
       const ip = getClientIP(req, app);
       const requestId = randomUUID();
       logs.write(ip, { requestId, type: 'websocket-request', url: target.href, method: 'GET', headers });
+      traffic?.request(ip, target);
       wss.handleUpgrade(req, socket, head, client => {
         let upstream;
         try {
@@ -120,14 +127,39 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
           } catch (error) { console.error(error.message); upstream.terminate(); client.terminate(); }
         });
         upstream.on('open', () => client.send(JSON.stringify({ protocol: upstream.protocol })));
-        upstream.on('message', (data, binary) => { if (client.readyState === WebSocket.OPEN) client.send(data, { binary }); });
-        client.on('message', (data, binary) => { if (upstream.readyState === WebSocket.OPEN) upstream.send(data, { binary }); });
+        const controller = new AbortController();
+        function relay (source, destination, direction) {
+          let tail = Promise.resolve();
+          let pending = 0;
+          source.on('message', (data, binary) => {
+            pending += data.length;
+            if (pending > 32 * 1024 * 1024) { source.terminate(); destination.terminate(); return; }
+            source.pause();
+            tail = tail.then(async () => {
+              const send = (part, fin) => new Promise((resolve, reject) => {
+                if (destination.readyState !== WebSocket.OPEN) return reject(new Error('WebSocket closed.'));
+                destination.send(part, { binary, fin }, error => error ? reject(error) : resolve());
+              });
+              if (!data.length) await send(data, true);
+              for (let offset = 0; offset < data.length;) {
+                const bytes = traffic ? await traffic.grant(ip, target.hostname, direction, data.length - offset, controller.signal) : data.length - offset;
+                await send(data.subarray(offset, offset + bytes), offset + bytes === data.length);
+                offset += bytes;
+              }
+            }).catch(() => { source.terminate(); destination.terminate(); }).finally(() => {
+              pending -= data.length;
+              if (!pending && source.readyState === WebSocket.OPEN) source.resume();
+            });
+          });
+        }
+        relay(upstream, client, 'download');
+        relay(client, upstream, 'upload');
         const close = (peer, code, reason) => {
           if (peer.readyState === WebSocket.OPEN) peer.close(code >= 1000 && code <= 4999 && ![1004, 1005, 1006, 1015].includes(code) ? code : 1000, reason);
           else if (peer.readyState === WebSocket.CONNECTING) peer.terminate();
         };
-        upstream.on('close', (code, reason) => close(client, code, reason));
-        client.on('close', (code, reason) => close(upstream, code, reason));
+        upstream.on('close', (code, reason) => { controller.abort(); close(client, code, reason); });
+        client.on('close', (code, reason) => { controller.abort(); close(upstream, code, reason); });
         upstream.on('error', error => {
           try { logs.write(ip, { requestId, type: 'websocket-error', url: target.href, method: 'GET', headers, error: error.code || 'UPSTREAM_ERROR' }); } catch (logError) { console.error(logError.message); }
           close(client, 1011, 'Upstream connection failed');

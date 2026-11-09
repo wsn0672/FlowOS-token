@@ -8,6 +8,7 @@ import apps from './constants/apps.js';
 import { WindowManager } from './wm.js';
 import Logger from './scripts/logger.js';
 import { safeAppURL } from './scripts/app-safety.js';
+import { initDesktop } from './scripts/desktop.js';
 
 const logger = new Logger();
 
@@ -84,6 +85,7 @@ export default class FlowInstance {
     }
 
     this.init = true;
+    initDesktop(this);
   };
 
   spotlight = {

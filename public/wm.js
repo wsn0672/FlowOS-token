@@ -5,6 +5,7 @@ import apps from './constants/apps.js';
 import FlowSDK from './sdk/index.js';
 import { config } from './scripts/managers.js';
 import { safeAppURL, safeWindowConfig } from './scripts/app-safety.js';
+import { confirmBrowser } from './scripts/desktop.js';
 
 window.WinBox = WinBox;
 
@@ -16,7 +17,10 @@ export class WindowManager {
    * @param {string} APP_ID
    * @returns {void}
    */
-  open = (APP_ID) => {
+  open = (APP_ID, browserConfirmed = false) => {
+    if (APP_ID === 'browser' && !browserConfirmed) {
+      return confirmBrowser().then(allowed => allowed ? this.open(APP_ID, true) : null);
+    }
     const app = apps()[APP_ID];
     window.logger.debug(JSON.stringify(app));
     return new AppInstance({

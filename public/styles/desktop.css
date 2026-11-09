@@ -341,3 +341,15 @@
 .wb-full {
 	display: none;
 }
+/* Desktop shortcuts share the current FlowOS theme. */
+.desktop-apps{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:24px;pointer-events:none;padding:60px 16px 110px;z-index:0}
+.desktop-apps button{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:14px;width:118px;padding:24px 10px;border:1px solid transparent;border-radius:18px;background:var(--bar-bg);color:var(--text-color);font:inherit;font-size:14px;cursor:pointer;transition:transform .2s,background .2s,border-color .2s}
+.desktop-apps button:hover,.desktop-apps button:focus-visible{background:var(--surface-bg);border-color:var(--primary);transform:translateY(-4px);outline:none}
+.desktop-apps img{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 5px 8px #0003)}
+.statusbar-giga{order:-1;cursor:pointer;border:1px solid transparent;font:inherit;font-size:12px;white-space:nowrap;gap:8px}
+.statusbar-giga:hover,.statusbar-giga:focus-visible{border-color:var(--primary);outline:none}.giga-symbol{color:var(--primary);font-size:11px;font-weight:700}
+.statusbar-giga progress{width:52px;height:4px;accent-color:var(--primary);border:0;border-radius:4px;overflow:hidden;background:var(--surface-bg)}
+.statusbar-giga progress::-webkit-progress-bar{background:var(--surface-bg)}.statusbar-giga progress::-webkit-progress-value{background:var(--primary)}.statusbar-giga.is-limited .giga-value{color:#ed8796}
+.browser-notice{color:var(--text-color);background:var(--window-bg);border:1px solid var(--primary);border-radius:16px;padding:30px;max-width:520px;width:calc(100% - 32px);box-shadow:0 24px 80px #0007}
+.browser-notice::backdrop{background:#0008;backdrop-filter:blur(8px)}.notice-eyebrow{font-size:11px;letter-spacing:.14em;color:var(--primary)}.browser-notice h2{font-size:23px;margin:18px 0}.browser-notice p{font-size:13px;line-height:1.9;opacity:.85}.notice-quota{background:var(--bar-bg);padding:14px;border-radius:8px}.notice-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;flex-wrap:wrap}.notice-actions button{padding:11px 14px;border:1px solid var(--surface-bg);border-radius:8px;background:var(--surface-bg);color:var(--text-color);font:inherit;font-size:12px;cursor:pointer}.notice-actions .primary-button{background:var(--primary);color:var(--desktop-bg)}
+@media(max-width:650px){.desktop-apps{display:grid;grid-template-columns:repeat(2,118px);align-content:center;gap:16px}.statusbar-giga{font-size:10px;gap:4px}.statusbar-giga progress{width:28px}.giga-symbol{display:none}.statusbar .left,.statusbar .middle{flex:0}.statusbar .right{flex:1}.notice-actions button{width:100%}}

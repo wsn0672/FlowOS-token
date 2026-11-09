@@ -21,8 +21,11 @@ export function createProxyLogs (directory) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('Invalid date.');
     return join(root, day);
   }
-  function write (ip, entry) {
+  function assertStorage () {
     if (requireMount && statSync('/mnt/timemachine').dev !== mountDevice) throw new Error('Log storage was unmounted.');
+  }
+  function write (ip, entry) {
+    assertStorage();
     const timestamp = new Date().toISOString();
     const folder = dayPath(timestamp.slice(0, 10));
     mkdirSync(folder, { recursive: true, mode: 0o700 });
@@ -71,5 +74,5 @@ export function createProxyLogs (directory) {
       if (fd !== undefined) closeSync(fd);
     }
   }
-  return { write, users, read, root };
+  return { write, users, read, root, assertStorage };
 }

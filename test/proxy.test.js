@@ -13,6 +13,7 @@ import { createProxyLogs } from '../src/proxyLogs.js';
 import { createAdminApp } from '../src/admin.js';
 import { isPublicAddress } from '../src/proxyTargets.js';
 import ServerTransport from '../public/proxy/transport.mjs';
+import { createTraffic, trafficDay } from '../src/traffic.js';
 
 async function listen (server, t) {
   server.listen(0, '127.0.0.1');
@@ -25,6 +26,7 @@ test('server transport forwards HTTP/WS, records metadata only and serves the IP
   const directory = mkdtempSync(join(tmpdir(), 'flowos-logs-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const logs = createProxyLogs(directory);
+  const traffic = createTraffic({ directory, quota: 32, rate: 1000 });
   let received;
   const upstream = createServer(async (req, res) => {
     const chunks = [];
@@ -38,7 +40,7 @@ test('server transport forwards HTTP/WS, records metadata only and serves the IP
   const target = await listen(upstream, t);
   const app = express();
   const server = createServer(app);
-  installProxy(app, server, logs, { allowPrivateTargets: true });
+  installProxy(app, server, logs, { allowPrivateTargets: true, traffic });
   const base = await listen(server, t);
   const transport = new ServerTransport({ base });
   const response = await transport.request(new URL(target + '/example'), 'POST', 'private-request-body', {
@@ -58,6 +60,8 @@ test('server transport forwards HTTP/WS, records metadata only and serves the IP
         try { assert.equal(data, 'private-websocket-payload'); close(1000, 'done'); } catch (error) { reject(error); }
       }, () => resolve(), reject);
   });
+  assert.equal(traffic.usage('127.0.0.1').totalBytes, Buffer.byteLength('private-request-body') + Buffer.byteLength('private-response-body') + 2 * Buffer.byteLength('private-websocket-payload'));
+  assert.equal(traffic.usage('127.0.0.1').requests, 2);
   const today = new Date().toISOString().slice(0, 10);
   assert.deepEqual(logs.users(today), ['127.0.0.1']);
   const records = logs.read(today, '127.0.0.1').records;
@@ -75,8 +79,11 @@ test('server transport forwards HTTP/WS, records metadata only and serves the IP
   assert.equal(latest.records.length + earlier.records.length, 100);
   assert.notEqual(latest.records.at(-1).url, earlier.records[0].url);
 
-  const admin = await listen(createServer(createAdminApp(logs)), t);
+  const admin = await listen(createServer(createAdminApp(logs, traffic)), t);
   assert.equal((await fetch(admin)).status, 200);
+  const stats = await (await fetch(admin + '/api/statistics?day=' + trafficDay())).json();
+  assert.equal(stats.totals.totalBytes, traffic.usage('127.0.0.1').totalBytes);
+  assert.equal(stats.totals.requests, 2);
   assert.deepEqual(await (await fetch(admin + '/api/users?day=' + today)).json(), ['127.0.0.1', '192.0.2.1']);
   const denied = await new Promise(resolve => get(admin, { headers: { host: 'evil.example' } }, response => { response.resume(); resolve(response.statusCode); }));
   assert.equal(denied, 403);

@@ -3,7 +3,8 @@ import express from 'express';
 import { createProxyLogs } from './proxyLogs.js';
 import { installProxy } from './proxy.js';
 import { createAdminApp } from './admin.js';
-import { configureClientIP } from './clientIP.js';
+import { configureClientIP, getClientIP } from './clientIP.js';
+import { createTraffic } from './traffic.js';
 
 import { uvPath } from '@titaniumnetwork-dev/ultraviolet';
 import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
@@ -22,8 +23,13 @@ const server = createServer({ maxHeaderSize: 65536 }, app);
 
 configureClientIP(app);
 const logs = createProxyLogs();
-installProxy(app, server, logs);
-const adminServer = createServer(createAdminApp(logs));
+const traffic = createTraffic({ directory: logs.root, assertStorage: logs.assertStorage });
+app.get('/api/usage', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(traffic.usage(getClientIP(req, app)));
+});
+installProxy(app, server, logs, { traffic });
+const adminServer = createServer(createAdminApp(logs, traffic));
 adminServer.listen(Number(process.env.ADMIN_PORT || 3744), process.env.ADMIN_HOST || '127.0.0.1');
 app.use('/', express.static(publicPath));
 app.use('/uv/', express.static(uvPath));

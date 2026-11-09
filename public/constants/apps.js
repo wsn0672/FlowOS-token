@@ -29,6 +29,7 @@ const apps = () => {
 			"/assets/icons/browser.svg",
 			false,
 		),
+		usage: new AppData("usage", "ギガ確認", "/builtin/apps/usage.html", "/assets/icons/network.svg", false, { width: "700px", height: "600px" }),
 		"app-wizard": new AppData(
 			"app-wizard",
 			"Custom Apps",
