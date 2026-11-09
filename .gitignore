@@ -8,3 +8,5 @@ src/emulator/data/minify/node_modules
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
+# Persistent site authentication lock state
+/data/
