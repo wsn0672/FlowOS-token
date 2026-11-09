@@ -7,6 +7,7 @@ import { config } from './scripts/managers.js';
 import apps from './constants/apps.js';
 import { WindowManager } from './wm.js';
 import Logger from './scripts/logger.js';
+import { safeAppURL } from './scripts/app-safety.js';
 
 const logger = new Logger();
 
@@ -190,7 +191,12 @@ export default class FlowInstance {
       document.querySelector('.spotlight .apps').innerHTML = '';
       for (const [APP_ID, value] of Object.entries(apps())) {
         const appListItem = document.createElement('li');
-        appListItem.innerHTML = `<img src="${value.icon}" width="25px"/><p>${value.title}</p>`;
+        const icon = document.createElement('img');
+        icon.src = safeAppURL(value.icon, '/assets/icons/application.svg', true);
+        icon.width = 25;
+        const title = document.createElement('p');
+        title.textContent = value.title;
+        appListItem.append(icon, title);
         appListItem.onclick = () => {
           this.wm.open(APP_ID);
           this.spotlight.toggle();

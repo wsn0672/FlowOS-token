@@ -4,6 +4,7 @@ import WinBox from 'https://cdn.jsdelivr.net/npm/winbox@0.2.82/src/js/winbox.js'
 import apps from './constants/apps.js';
 import FlowSDK from './sdk/index.js';
 import { config } from './scripts/managers.js';
+import { safeAppURL, safeWindowConfig } from './scripts/app-safety.js';
 
 window.WinBox = WinBox;
 
@@ -20,12 +21,12 @@ export class WindowManager {
     window.logger.debug(JSON.stringify(app));
     return new AppInstance({
       title: app.title,
-      icon: app.icon,
-      url: app.url,
+      icon: safeAppURL(app.icon, '/assets/icons/application.svg', true),
+      url: safeAppURL(app.url),
       proxy: app.proxy,
       x: 'center',
       y: 'center',
-      ...app.config
+      ...safeWindowConfig(app.config)
     });
   };
 
@@ -78,7 +79,7 @@ class WindowInstance {
     taskbarImg.height = '18';
 
     taskbarItem.append(taskbarImg);
-    taskbarItem.innerHTML += this.options.title;
+    taskbarItem.append(document.createTextNode(this.options.title));
     document.querySelector('.taskbar').append(taskbarItem);
 
     const _onclose = this.instance.onclose;
@@ -153,8 +154,9 @@ export class AppInstance extends WindowInstance {
         const sdk = new FlowSDK(this.instance, this.options.url);
         iframe.contentWindow.FlowSDK = sdk;
         sdk.onmanifest = (manifest) => {
-          if (manifest.uses.includes('theming')) loadCSS(config.settings.get('theme').url, iframe.contentDocument);
-          if (manifest.uses.includes('styling')) {
+          const uses = Array.isArray(manifest.uses) ? manifest.uses : [];
+          if (uses.includes('theming')) loadCSS(config.settings.get('theme').url, iframe.contentDocument);
+          if (uses.includes('styling')) {
             loadCSS('/styles/style.css', iframe.contentDocument);
             loadCSS('/styles/window.css', iframe.contentDocument);
           }

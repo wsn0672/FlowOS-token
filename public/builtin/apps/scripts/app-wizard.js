@@ -1,6 +1,7 @@
 /* eslint-env browser */
 
 import { config } from '../../../scripts/managers.js';
+import { readAppDefinition } from '../../../scripts/app-safety.js';
 
 console.log(config.customApps.get());
 
@@ -62,9 +63,17 @@ window.onmousemove = (e) => {
   }
 };
 
-document.querySelector('.url').onsubmit = async () => {
-  const res = await fetch(document.querySelector('input').value);
-  const data = await res.json();
+document.querySelector('.url').onsubmit = async (event) => {
+  event.preventDefault();
+  let data;
+  try {
+    const res = await fetch(document.querySelector('input').value);
+    if (!res.ok) throw new Error('Could not load application manifest.');
+    data = readAppDefinition(await res.json());
+  } catch {
+    window.alert('The application manifest could not be imported. Check the URL and manifest format.');
+    return;
+  }
 
   const obj = {
     ...config.customApps.get()
@@ -76,8 +85,15 @@ document.querySelector('.url').onsubmit = async () => {
   parent.Flow.apps.register();
 };
 
-document.querySelector('.json').onsubmit = () => {
-  const data = JSON.parse(document.querySelector('textarea').value);
+document.querySelector('.json').onsubmit = (event) => {
+  event.preventDefault();
+  let data;
+  try {
+    data = readAppDefinition(JSON.parse(document.querySelector('textarea').value));
+  } catch {
+    window.alert('The application manifest could not be imported. Check the JSON format.');
+    return;
+  }
   const obj = {
     ...config.customApps.get()
   };
