@@ -74,9 +74,7 @@ To get a local copy up and running follow these simple example steps.
    ```sh
    yarn install
    ```
-3. Copy `.env.example` to `.env` and set `SITE_PASSWORD` to a long, unique password.
-   The server refuses to start without a password.
-4. Run
+3. Run
    ```sh
    yarn start
    ```
@@ -86,29 +84,6 @@ To get a local copy up and running follow these simple example steps.
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Site password and IP lockout
-
-All site files and the Wisp WebSocket proxy require a password login. The server
-issues an HttpOnly, SameSite=Strict session cookie valid for 24 hours. Sessions
-are stored in memory and expire on server restart. Passwords are never sent to
-the client or stored in the lock state file.
-
-Five failed password attempts from the same IP within 24 hours lock that IP for
-24 hours from the fifth failure, including existing HTTP and new WebSocket
-requests. A successful login resets the failure count. IPs shared by multiple
-users share the same limit. Existing WebSocket connections are not disconnected.
-
-Lock state is saved to `AUTH_STATE_PATH` (default `./data/auth-locks.json`) so it
-survives restarts. Keep this file outside `public/`, on a persistent writable
-volume. This file store supports a **single server process**; multiple instances
-must use a shared atomic store before deployment.
-
-Use HTTPS in production and set `COOKIE_SECURE=true`. Behind a reverse proxy,
-set `TRUST_PROXY` to that proxy's IP addresses or CIDRs and configure the proxy to
-replace forwarded headers. Forward the original Host and protocol. Without this
-setting, only the direct socket IP is used; behind a proxy that would apply the
-lock to all users together. Never trust arbitrary client-supplied forwarded headers.
 
 <!-- CONTRIBUTING -->
 ## Contributing
