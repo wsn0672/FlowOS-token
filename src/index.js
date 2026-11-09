@@ -24,6 +24,11 @@ const server = createServer({ maxHeaderSize: 65536 }, app);
 configureClientIP(app);
 const logs = createProxyLogs();
 const traffic = createTraffic({ directory: logs.root, assertStorage: logs.assertStorage });
+app.get('/api/proxy-health', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('X-FlowOS-Health', 'ok');
+  res.sendStatus(204);
+});
 app.get('/api/usage', (req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json(traffic.usage(getClientIP(req, app)));

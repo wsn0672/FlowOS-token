@@ -4,9 +4,9 @@ import { config } from '../../scripts/managers.js';
 import { BarItem, SettingsCategory, SettingsInput, SettingsDropdown } from '../../scripts/classes.js';
 
 const weather = new BarItem('weather', { position: 'left' });
-const weatherSettings = new SettingsCategory('weather', 'Weather', [
-  new SettingsInput('city', 'City Name', 'London', 'London'),
-  new SettingsDropdown('measurement', 'Measurement System', 'Celsius', ['Celsius', 'Fahrenheit'])
+const weatherSettings = new SettingsCategory('weather', '天気', [
+  new SettingsInput('city', '都市名', 'London', 'London'),
+  new SettingsDropdown('measurement', '温度の単位', 'Celsius', ['Celsius', 'Fahrenheit'])
 ]);
 window.weatherSettings = () => weatherSettings;
 

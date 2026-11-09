@@ -2,13 +2,15 @@
 
 import { config } from '../../../scripts/managers.js';
 
+const valueLabels = new Map([['Celsius', '摂氏（℃）'], ['Fahrenheit', '華氏（℉）']]);
+
 window.onload = () => {
   Object.values(parent.Flow.settings.items).forEach((setting) => {
     const section = document.createElement('form');
     section.classList.add(`settings-${setting.SETTING_ID}`);
 
     const button = document.createElement('button');
-    button.innerText = 'Update';
+    button.innerText = '保存して反映';
 
     const heading = document.createElement('h2');
     heading.innerText = setting.title;
@@ -21,16 +23,18 @@ window.onload = () => {
       const sub = document.createElement('sub');
 
       label.innerText = input.label;
-      sub.innerText = `Default: ${input.defaultValue}\n\n`;
+      sub.innerText = `初期値: ${valueLabels.get(input.defaultValue) ?? input.defaultValue}\n\n`;
 
-      inputEl.classList.add(`settings-${setting.SETTING_ID}-${input.SETTING_INPUT_ID}`);
+      inputEl.id = `settings-${setting.SETTING_ID}-${input.SETTING_INPUT_ID}`;
+      label.htmlFor = inputEl.id;
+      inputEl.classList.add(inputEl.id);
       inputEl.placeholder = input.placeholder;
 
       if (input.type === 'select') {
         input.options.forEach((option) => {
           const optionEl = document.createElement('option');
           optionEl.value = option;
-          optionEl.innerText = option;
+          optionEl.innerText = valueLabels.get(option) ?? option;
 
           inputEl.append(optionEl);
         });
@@ -54,7 +58,7 @@ window.onload = () => {
         });
 
         config.settings.set(setting.SETTING_ID, obj);
-        parent.window.reload();
+        parent.window.location.reload();
       };
     });
 
@@ -71,7 +75,7 @@ window.onload = () => {
 window.openCSS = () => {
   console.log(parent);
   parent.WinBox({
-    title: 'CSS Editor',
+    title: 'CSSエディター',
     icon: 'assets/icons/text-editor.svg',
     html: '<iframe src="/builtin/apps/css.html" scrolling="yes"></iframe>',
     x: 'center',

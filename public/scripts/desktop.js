@@ -1,8 +1,12 @@
 /* eslint-env browser */
 import apps from '../constants/apps.js';
 
+const NOTICE_KEY = 'flowos-browser-notice-v1';
+let noticeAccepted = false;
 let browserNotice;
 export function confirmBrowser () {
+  try { if (localStorage.getItem(NOTICE_KEY) === 'accepted') noticeAccepted = true; } catch {}
+  if (noticeAccepted) return Promise.resolve(true);
   if (browserNotice) return browserNotice;
   browserNotice = new Promise(resolve => {
     const previous = document.activeElement;
@@ -11,6 +15,10 @@ export function confirmBrowser () {
     dialog.setAttribute('aria-labelledby', 'browser-notice-title');
     dialog.innerHTML = '<span class="notice-eyebrow">FLOW OS · PRIVACY</span><h2 id="browser-notice-title">通信は記録されます</h2><p>このブラウザーの通信では、IPアドレス・アクセス先・HTTPメソッド・ヘッダー・通信量がサーバーに記録されます。</p><p>通信本文は保存されません。CookieやAuthorizationなどの認証ヘッダーは伏せ字で記録されます。</p><p class="notice-quota">1日3GBまで通常速度。超過後は同じIPの通信全体が1Mbpsに制限され、日本時間の午前0時に解除されます。</p><div class="notice-actions"><button type="button" data-choice="cancel">キャンセル</button><button type="button" data-choice="continue" class="primary-button">確認してブラウザーを開く</button></div>';
     const finish = allowed => {
+      if (allowed) {
+        noticeAccepted = true;
+        try { localStorage.setItem(NOTICE_KEY, 'accepted'); } catch {}
+      }
       dialog.close();
       dialog.remove();
       browserNotice = null;

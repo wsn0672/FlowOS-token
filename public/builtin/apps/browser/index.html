@@ -52,9 +52,11 @@
 			</a>
 		</div>
 
+		<section id="connection-status" class="connection-status" role="status" hidden><p></p><div><button data-action="reconnect">再接続</button><button data-action="reload" hidden>このタブを再読み込み</button><button data-action="dismiss" aria-label="通知を閉じる">閉じる</button></div></section>
 		<main></main>
 
 		<script src="/scripts/app.js" defer type="module"></script>
+		<script src="./recovery.js" type="module"></script>
 		<script src="./index.js" defer type="module"></script>
 	</body>
 </html>

@@ -2,7 +2,7 @@
 
 import hotkeys from 'https://cdn.jsdelivr.net/npm/hotkeys-js@3.11.2/+esm';
 
-import { registerSW, loadCSS, sleep } from './scripts/utilities.js';
+import { registerSW, recoverProxy, loadCSS, sleep } from './scripts/utilities.js';
 import { config } from './scripts/managers.js';
 import apps from './constants/apps.js';
 import { WindowManager } from './wm.js';
@@ -26,7 +26,7 @@ export default class FlowInstance {
    * Creates a FlowOS instance
    */
   constructor () {
-    registerSW();
+    this.proxyReady = Promise.resolve(registerSW()).catch(error => logger.error(error));
     this.setVersion();
   }
 
@@ -46,7 +46,10 @@ export default class FlowInstance {
    * Boots up the FlowOS runtime
    * @returns {void}
    */
+  recoverProxy = () => recoverProxy();
+
   boot = async () => {
+    await this.proxyReady;
     document.querySelector('.boot').style.opacity = 0;
     setTimeout(() => {
       document.querySelector('.boot').style.pointerEvents = 'none';

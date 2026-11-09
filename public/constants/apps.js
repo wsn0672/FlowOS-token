@@ -17,7 +17,7 @@ const apps = () => {
 		),
 		settings: new AppData(
 			"settings",
-			"Settings",
+			"設定",
 			"/builtin/apps/settings.html",
 			"/assets/icons/settings.svg",
 			false,

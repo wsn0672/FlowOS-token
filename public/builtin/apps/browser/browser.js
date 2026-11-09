@@ -91,6 +91,9 @@ export class Tab {
     * @returns {void}
     */
   #handleTab = (iframe, titleBtn, img) => {
+    if (iframe.contentDocument.querySelector('#errorTitle')?.textContent === 'Error processing your request') {
+      window.dispatchEvent(new CustomEvent('flow-proxy-error'));
+    }
     let open = false;
     const url = proxyConfig.decodeUrl(new URL(iframe.contentWindow.location).pathname.replace(new RegExp(`${proxyConfig.prefix.replaceAll('/', '\\/')}`, 'g'), ''));
 

@@ -1,22 +1,43 @@
 /* eslint-env browser */
-/* global __uv$config, __dyn$config */
+/* global __uv$config, BareMux */
 
 import { SettingsCategory, SettingsInput, SettingsTextarea, SettingsDropdown } from './classes.js';
 import { config } from './managers.js';
 import Logger from './logger.js';
+import { createProxyRecovery, watchProxyRecovery, withTimeout } from './proxy-recovery.js';
 
 const logger = new Logger();
 
-export const registerSW = async () => {
-  const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
-  if (!('serviceWorker' in navigator)) return;
-
-  await connection.setTransport('/proxy/transport.mjs', [{ base: location.origin }]);
-  await navigator.serviceWorker.register('/uv/sw.js', {
-    scope: __uv$config.prefix
-  }).catch(() => window.logger.error('Failed to register UV serviceWorker.'));
-  return true;
+let recovery;
+let registration;
+export const registerSW = () => {
+  if (registration) return registration;
+  registration = (async () => {
+    if (!('serviceWorker' in navigator)) return;
+    const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
+    recovery = createProxyRecovery({
+      connection,
+      probe: async () => {
+        const response = await fetch('/api/proxy-health', { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+        if (response.status !== 204 || response.headers.get('x-flowos-health') !== 'ok') throw new Error('サーバーに接続できません。');
+        if (!await withTimeout(navigator.serviceWorker.getRegistration(__uv$config.prefix))) {
+          await withTimeout(navigator.serviceWorker.register('/uv/sw.js', { scope: __uv$config.prefix }));
+        }
+      },
+      notify: detail => {
+        window.flowProxyStatus = detail;
+        window.dispatchEvent(new CustomEvent('flow-proxy-status', { detail }));
+      }
+    });
+    watchProxyRecovery(recovery);
+    await recovery.ensure();
+    await withTimeout(navigator.serviceWorker.register('/uv/sw.js', { scope: __uv$config.prefix }));
+    return true;
+  })();
+  return registration;
 };
+
+export const recoverProxy = () => recovery ? recovery.recover() : Promise.resolve(false);
 
 export const loadCSS = (FILE_URL) => {
   const startDate = new Date();
@@ -45,18 +66,18 @@ export const sleep = (ms) => {
 };
 
 export const registerSettings = () => {
-  const search = new SettingsCategory('search', 'Browser', [
-    new SettingsInput('url', 'Search Engine URL', 'https://duckduckgo.com', 'https://duckduckgo.com'),
-    new SettingsTextarea('urls', 'Extension URLs', 'https://mysite.to/script1.js\nhttps://mysite.to/script2.js\nhttps://mysite.to/script3.js', ''),
-    new SettingsDropdown('proxy', 'Proxy', 'Ultraviolet', ['Ultraviolet', 'Dynamic'])
+  const search = new SettingsCategory('search', 'ブラウザー', [
+    new SettingsInput('url', '検索エンジンのURL', 'https://duckduckgo.com', 'https://duckduckgo.com'),
+    new SettingsTextarea('urls', '拡張スクリプトのURL（1行に1件）', 'https://mysite.to/script1.js\nhttps://mysite.to/script2.js\nhttps://mysite.to/script3.js', ''),
+    new SettingsDropdown('proxy', 'プロキシ', 'Ultraviolet', ['Ultraviolet', 'Dynamic'])
   ]);
 
-  const theme = new SettingsCategory('theme', 'Theme', [
-    new SettingsInput('url', 'Theme URL', 'https://mysite.to/theme.css', '/builtin/themes/catppuccin-macchiato.css')
+  const theme = new SettingsCategory('theme', 'テーマ', [
+    new SettingsInput('url', 'テーマのURL', 'https://mysite.to/theme.css', '/builtin/themes/catppuccin-macchiato.css')
   ]);
 
-  const modules = new SettingsCategory('modules', 'Modules/Scripts', [
-    new SettingsTextarea('urls', 'Module URLs', 'https://mysite.to/script1.js\nhttps://mysite.to/script2.js\nhttps://mysite.to/script3.js', '/builtin/modules/battery.js\n/builtin/modules/clock.js\n/builtin/modules/weather.js')
+  const modules = new SettingsCategory('modules', 'モジュール・スクリプト', [
+    new SettingsTextarea('urls', 'モジュールのURL（1行に1件）', 'https://mysite.to/script1.js\nhttps://mysite.to/script2.js\nhttps://mysite.to/script3.js', '/builtin/modules/battery.js\n/builtin/modules/clock.js\n/builtin/modules/weather.js')
   ]);
 
   return { search, theme, modules };
