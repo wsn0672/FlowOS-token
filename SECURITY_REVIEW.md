@@ -19,6 +19,7 @@
 
 - 更新後の `npm audit --omit=dev --json`: **0件（critical/high/moderate/lowすべて0）**。開発用依存、CDN、同梱ゲームを含む全ソフトウェアの安全性保証ではない。
 - `node --test test/security-client.test.js test/proxy.test.js`: HTTP/WS転送、内部IP遮断、manifest検証、一覧のテキスト描画、SDKの承認/拒否について5件成功。
+- `node --test test/security-proxy-errors.test.js`: HTTP/WSの接続先が応答しない場合も、サーバーが終了せず正常なリクエストを継続処理できることを1件確認。合計6件成功。
 - 変更したクライアントファイルの限定lintを実施。通常のsemistandardには、既存のprivateメソッドをReactのisMountedと誤認する指摘が残る。同ルールのみ無効にした、設定ファイルを変更しない限定チェックは成功。
 - 公開サーバーへの反映や、実ブラウザでの全アプリの操作確認は行っていない。
 
