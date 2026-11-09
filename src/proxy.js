@@ -7,8 +7,7 @@ import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
 import { pipeline } from 'node:stream';
 import { WebSocket, WebSocketServer } from 'ws';
 
-// Reuse Express's IP getter so HTTP and WebSocket requests trust the same proxies.
-import express from 'express';
+import { getClientIP } from './clientIP.js';
 
 const hopHeaders = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'host', 'content-length']);
 function targetURL (value, protocols, allowPrivateTargets) {
@@ -43,6 +42,7 @@ function rawHeaders (raw) {
 
 export function installProxy (app, server, logs, { allowPrivateTargets = false } = {}) {
   app.post('/proxy/http', (req, res) => {
+    const ip = getClientIP(req, app);
     let url, meta, headers;
     try {
       meta = JSON.parse(Buffer.from(req.get('x-flowos-request') || '', 'base64url').toString());
@@ -58,7 +58,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
       upstream = (url.protocol === 'https:' ? https : http).request(url, { method: meta.method, headers, lookup: allowPrivateTargets ? undefined : publicLookup }, response => {
         const responseHeaders = rawHeaders(response.rawHeaders);
         try {
-          logs.write(req.ip, { ...entry, type: 'http-response', status: response.statusCode, responseHeaders });
+          logs.write(ip, { ...entry, type: 'http-response', status: response.statusCode, responseHeaders });
         } catch (error) {
           console.error('Proxy log write failed:', error.message);
           response.destroy();
@@ -78,7 +78,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
         pipeline(...streams, () => {});
       });
       entry.headers = upstream.getHeaders();
-      logs.write(req.ip, entry);
+      logs.write(ip, entry);
     } catch (error) {
       upstream?.destroy();
       console.error('Proxy request/log error:', error.message);
@@ -86,7 +86,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
     }
     upstream.setTimeout(60000, () => upstream.destroy(new Error('Upstream timeout.')));
     upstream.on('error', error => {
-      try { logs.write(req.ip, { ...entry, type: 'http-error', error: error.code || 'UPSTREAM_ERROR' }); } catch (logError) { console.error(logError.message); }
+      try { logs.write(ip, { ...entry, type: 'http-error', error: error.code || 'UPSTREAM_ERROR' }); } catch (logError) { console.error(logError.message); }
       if (!res.headersSent) res.status(502).send('Upstream request failed.');
       else res.destroy();
     });
@@ -106,7 +106,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
       headers = outgoingHeaders(meta.headers);
       protocols = meta.protocols || [];
       if (!Array.isArray(protocols) || protocols.some(v => typeof v !== 'string')) throw new Error('Invalid protocols.');
-      const ip = Reflect.get(expressRequestIP, 'ip', { app, connection: req.socket, headers: req.headers });
+      const ip = getClientIP(req, app);
       const requestId = randomUUID();
       logs.write(ip, { requestId, type: 'websocket-request', url: target.href, method: 'GET', headers });
       wss.handleUpgrade(req, socket, head, client => {
@@ -139,4 +139,3 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false }
     }
   });
 }
-const expressRequestIP = express.request;

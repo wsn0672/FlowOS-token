@@ -59,9 +59,21 @@ FlowOSのプロキシ機能は動作しない。
 接続先URLや元サイトのHTTPヘッダーは `x-flowos-request` に格納されるため、
 このヘッダーの値やWebSocketのクエリー文字列をリバースプロキシのアクセスログに出力しない。
 
-IPを正確に記録するには、`.env` の `TRUST_PROXY` に実際のリバースプロキシのIP/CIDRのみを設定し、
-リバースプロキシ側で `X-Forwarded-For` を正しく設定する。
-無指定ならソケットの接続元IPを使用する。利用者が共有するNATの外側では、同じIPは同一利用者として表示される。
+Cloudflare Tunnel（cloudflared）が同じサーバーの `127.0.0.1` / `::1` から接続する場合、
+追加設定なしで `CF-Connecting-IP` の利用者IPをHTTP・WebSocket両方のログに使用する。
+このヘッダーは正しい単一のIPv4/IPv6か検証し、信頼済み接続元から来た場合だけ採用する。
+それ以外はExpressの `X-Forwarded-For` 判定へ戻る。
+参照: [Cloudflare HTTPヘッダー](https://developers.cloudflare.com/fundamentals/reference/http-headers/)。
+
+既定ではloopbackのみを信頼する。cloudflaredがコンテナや別ホストにある場合は、
+`.env` の `TRUST_PROXY` に実際の接続元IP/CIDRを指定する（例: `TRUST_PROXY=loopback,172.18.0.2`）。
+設定値は既定値を置き換える。空の `TRUST_PROXY=` で転送ヘッダーの信頼をすべて無効にできる。
+直接接続した外部利用者の転送ヘッダーは無視する。
+Cloudflare以外の信頼済みプロキシを使う場合は、`CF-Connecting-IP` を削除または上書きし、
+`X-Forwarded-For` を正しく設定する。
+Cloudflareのヘッダー削除ルールがある場合は `CF-Connecting-IP` を削除しない設定にする。
+利用者が共有するNATの外側では、同じIPは同一利用者として表示される。
+反映後の通信から新しいIPで記録し、過去の `127.0.0.1` のログはそのまま残る。
 
 ## 3. 再起動時にディスクのマウントを待つ
 

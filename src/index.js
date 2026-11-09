@@ -3,6 +3,7 @@ import express from 'express';
 import { createProxyLogs } from './proxyLogs.js';
 import { installProxy } from './proxy.js';
 import { createAdminApp } from './admin.js';
+import { configureClientIP } from './clientIP.js';
 
 import { uvPath } from '@titaniumnetwork-dev/ultraviolet';
 import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
@@ -19,10 +20,7 @@ const port = process.env.PORT || 3743;
 const app = express();
 const server = createServer({ maxHeaderSize: 65536 }, app);
 
-// Only trust explicitly configured proxy addresses, never arbitrary forwarded headers.
-if (process.env.TRUST_PROXY) {
-  app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
-}
+configureClientIP(app);
 const logs = createProxyLogs();
 installProxy(app, server, logs);
 const adminServer = createServer(createAdminApp(logs));
