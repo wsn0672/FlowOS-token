@@ -9,6 +9,9 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 import { getClientIP } from './clientIP.js';
 
+// Some sites (including YouTube) return more than Node's default 16 KiB of headers.
+const UPSTREAM_MAX_HEADER_SIZE = 64 * 1024;
+
 const hopHeaders = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'host', 'content-length']);
 function targetURL (value, protocols, allowPrivateTargets) {
   const url = new URL(value);
@@ -56,7 +59,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false, 
     const entry = { requestId: randomUUID(), type: 'http-request', url: url.href, method: meta.method, headers };
     let upstream;
     try {
-      upstream = (url.protocol === 'https:' ? https : http).request(url, { method: meta.method, headers, lookup: allowPrivateTargets ? undefined : publicLookup }, response => {
+      upstream = (url.protocol === 'https:' ? https : http).request(url, { method: meta.method, headers, maxHeaderSize: UPSTREAM_MAX_HEADER_SIZE, lookup: allowPrivateTargets ? undefined : publicLookup }, response => {
         const responseHeaders = rawHeaders(response.rawHeaders);
         try {
           logs.write(ip, { ...entry, type: 'http-response', status: response.statusCode, responseHeaders });
@@ -119,7 +122,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false, 
       wss.handleUpgrade(req, socket, head, client => {
         let upstream;
         try {
-          upstream = new WebSocket(target, protocols, { headers, lookup: allowPrivateTargets ? undefined : publicLookup, perMessageDeflate: false, maxPayload: 16 * 1024 * 1024, handshakeTimeout: 30000 });
+          upstream = new WebSocket(target, protocols, { headers, maxHeaderSize: UPSTREAM_MAX_HEADER_SIZE, lookup: allowPrivateTargets ? undefined : publicLookup, perMessageDeflate: false, maxPayload: 16 * 1024 * 1024, handshakeTimeout: 30000 });
         } catch { client.close(1011, 'Upstream connection failed'); return; }
         upstream.on('upgrade', response => {
           try {
