@@ -3,6 +3,7 @@
 import { Tab } from './browser.js';
 
 import { browserAction, engine, navigate } from './engines.js';
+import { toggleDevTools } from './devtools.js';
 
 document.querySelector('.engine-badge').textContent = engine;
 window.browserAction = action => browserAction(window.clickList[0], action);
@@ -17,6 +18,16 @@ window.goBrowser = value => {
 const input = document.querySelector('input');
 const dropdownBtn = document.querySelector('.more');
 const dropdownMenu = document.getElementById('dropdown');
+
+const devTools = dropdownMenu.querySelector('.eruda');
+if (engine === 'Rammerhead') devTools.hidden = true;
+devTools.onclick = async () => {
+  try {
+    await toggleDevTools(window.clickList[0]);
+  } catch (error) {
+    window.dispatchEvent(new CustomEvent('flow-browser-navigation-error', { detail: error.message }));
+  }
+};
 
 let inputShowing = true;
 

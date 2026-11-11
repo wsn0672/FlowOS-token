@@ -102,29 +102,9 @@ export class Tab {
     }
     this.#updateTab(iframe, titleBtn, img, { url, title: doc.title });
     if (url.startsWith('flow:')) return;
-    let open = false;
 
     config.settings.get('search').urls.forEach((url) => {
       this.#injectJS(iframe, url, false, () => {});
-    });
-
-    this.#injectJS(iframe, 'https://cdn.jsdelivr.net/npm/eruda', true, () => {
-      this.#injectJS(iframe, 'https://cdn.jsdelivr.net/npm/eruda-code', true, () => {
-        iframe.contentWindow.eruda.add(iframe.contentWindow.erudaCode);
-      });
-
-      iframe.contentWindow.eruda.init({ tool: ['console', 'elements', 'code', 'sources'] });
-      iframe.contentWindow.eruda._entryBtn.hide();
-
-      document.querySelector('.eruda').onclick = () => {
-        if (open === false) {
-          iframe.contentWindow.eruda.show();
-        } else {
-          iframe.contentWindow.eruda.hide();
-        }
-
-        open = !open;
-      };
     });
 
     document.querySelector('.block').onclick = () => {
