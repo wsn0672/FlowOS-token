@@ -1,7 +1,7 @@
 /* eslint-env browser */
 export const browserEngines = [
-  { id: 'Ultraviolet', label: 'A · Ultraviolet', description: '非推奨です。FlowOSでこれまで使ってきた方式です。基本的なWeb閲覧OK。YouTube再生不可。' },
-  { id: 'Scramjet', label: 'B · Scramjet', description: '【推奨】新しい書き換え方式です。動的なwebサイトでの表示成功率が高いです。Xログイン・投稿OK。Googleログイン不可。' },
+  { id: 'Ultraviolet', label: 'A · Ultraviolet', description: '非推奨です。非常に不安定。FlowOSでこれまで使ってきた方式です。YouTube再生不可。' },
+  { id: 'Scramjet', label: 'B · Scramjet', description: '【推奨】新しい書き換え方式です。動的なwebサイトでの表示成功率が高いです。YouTube再生OK。Xログイン・投稿OK。Googleログイン不可。' },
   { id: 'Rammerhead', label: 'C · Rammerhead', description: 'サーバー側でページを書き換える方式です。ほかの方式で開けないサイトを開ける可能性がありますが、別ドメイン "rammerhead.wsn0672.jp" を使用するため、検閲される可能性があります。Googleログイン不可。' }
 ];
 
