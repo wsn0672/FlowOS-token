@@ -259,15 +259,20 @@ Ultraviolet・Scramjet・Rammerheadの3件を表示する。Rammerheadのホス�
 
 Ubuntuで `pm2 describe flowos` の `exec cwd` を確認し、そのディレクトリで更新する。
 
+`git pull` が `package-lock.json` のローカル変更で中断される場合は、差分を確認し、
+そのファイルだけを `git stash push -m "FlowOS deploy: local package-lock" -- package-lock.json`
+で退避してから更新する。退避した変更は `git stash list` で確認できる。
+
 ```sh
-git pull --ff-only origin main
-npm ci --omit=dev
-pm2 restart ecosystem.config.cjs --update-env
+git pull --ff-only origin main &&
+npm ci --omit=dev &&
+pm2 restart ecosystem.config.cjs --update-env &&
+curl -fsS --retry 5 --retry-connrefused --retry-delay 1 http://127.0.0.1:3743/api/browser-engines &&
 pm2 save
-git rev-parse --short HEAD
-curl -fsS http://127.0.0.1:3743/ver
-curl -fsS http://127.0.0.1:3743/api/browser-engines
 ```
+
+途中のコマンドが失敗した場合はそこで止まる。再起動後も3743に接続できない場合は、
+`pm2 logs flowos --lines 60 --nostream` で起動エラーを確認する。
 
 3エンジンの追加コミットは `e94361b`。公開URLでも `/ver` と `/api/browser-engines`
 を開き、ローカルの応答と一致することを確認する。`/api/browser-engines` がローカルで
