@@ -37,7 +37,7 @@ window.addEventListener('pagehide', () => parent.removeEventListener('flow-proxy
 reconnect.onclick = () => parent.Flow.recoverProxy();
 reload.onclick = () => {
   const frame = window.clickList?.[0];
-  if (frame && window.confirm('このタブを再読み込みしますか？入力中の内容や送信済みフォームを確認してください。')) frame.contentWindow.location.reload();
+  if (frame && window.confirm('このタブを再読み込みしますか？入力中の内容や送信済みフォームを確認してください。')) window.browserAction('reload');
 };
 dismiss.onclick = () => { banner.hidden = true; };
 window.addEventListener('flow-proxy-error', () => {
@@ -46,3 +46,9 @@ window.addEventListener('flow-proxy-error', () => {
   parent.Flow.recoverProxy();
 });
 if (parent.flowProxyStatus) show(parent.flowProxyStatus);
+
+window.addEventListener('flow-browser-navigation-error', event => {
+  message.textContent = event.detail;
+  banner.hidden = false;
+  reload.hidden = true;
+});

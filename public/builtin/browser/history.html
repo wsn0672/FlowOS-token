@@ -34,7 +34,17 @@
                 img.src = item.favicon;
 
                 gotoBtn.innerText = item.title + '\n⤷ ' + new Date(item.date).toUTCString();
-                gotoBtn.href = item.url;
+                gotoBtn.href = '#';
+                gotoBtn.onclick = event => {
+                    event.preventDefault();
+                    try {
+                        const url = new URL(item.url, location.origin);
+                        if (url.origin === location.origin && url.pathname.startsWith('/uv/service/')) {
+                            const config = parent.parent.currentProxy;
+                            parent.goBrowser(config.decodeUrl(url.pathname.slice(config.prefix.length)) + url.search + url.hash);
+                        } else if (['https:', 'http:'].includes(url.protocol)) parent.goBrowser(url.href);
+                    } catch {}
+                };
 
                 removeBtn.innerText = '[🗑️]';
                 removeBtn.onclick = () => {

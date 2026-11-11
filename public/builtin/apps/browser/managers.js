@@ -1,8 +1,8 @@
 /* eslint-env browser */
 
-const input = document.querySelector('input');
+import { displayURL } from './engines.js';
 
-const proxyConfig = parent.currentProxy;
+const input = document.querySelector('input');
 
 export class HistoryManager {
   constructor () {
@@ -41,16 +41,10 @@ export class TabManager {
    * @returns {void}
    */
   setActiveTab = (iframe) => {
-    window.clickList.push(iframe);
-
-    if (!iframe && window.clickList[0] !== window.clickList[1]) {
-      return;
-    }
-
-    try { input.value = proxyConfig.decodeUrl(new URL(iframe.contentWindow.location).pathname.replace(/\/uv\/service\//g, '')); } catch (e) {}
+    if (!iframe) return;
+    if (window.clickList[0]) window.clickList[0].style.display = 'none';
+    window.clickList[0] = iframe;
+    try { input.value = displayURL(iframe); } catch { input.value = ''; }
     iframe.style.display = 'block';
-    if (window.clickList.length > 1) {
-      window.clickList.at(-2).style.display = 'none';
-    }
   };
 }

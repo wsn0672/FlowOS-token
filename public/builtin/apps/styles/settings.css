@@ -28,3 +28,6 @@ main {
 	margin-left: calc(30% + 10px); /* Same width as the sidebar + left position in px */
 	padding: 0px 10px;
 }
+.browser-engine-settings dl { font-size: .85em; line-height: 1.6; }
+.browser-engine-settings dt { color: var(--primary); font-weight: bold; }
+.browser-engine-settings dd { margin: 0 0 .5em; }

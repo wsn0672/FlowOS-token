@@ -10,10 +10,10 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { getClientIP } from './clientIP.js';
 
 // Some sites (including YouTube) return more than Node's default 16 KiB of headers.
-const UPSTREAM_MAX_HEADER_SIZE = 64 * 1024;
+export const UPSTREAM_MAX_HEADER_SIZE = 64 * 1024;
 
 const hopHeaders = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'host', 'content-length']);
-function targetURL (value, protocols, allowPrivateTargets) {
+export function targetURL (value, protocols, allowPrivateTargets) {
   const url = new URL(value);
   if (!protocols.includes(url.protocol) || url.username || url.password) throw new Error('Invalid proxy target.');
   const host = url.hostname.replace(/^\[|\]$/g, '');
@@ -34,7 +34,7 @@ function outgoingHeaders (input = {}) {
   headers['accept-encoding'] = 'identity';
   return headers;
 }
-function rawHeaders (raw) {
+export function rawHeaders (raw) {
   const result = {};
   for (let i = 0; i < raw.length; i += 2) {
     const key = raw[i].toLowerCase();
@@ -43,7 +43,7 @@ function rawHeaders (raw) {
   return result;
 }
 
-export function installProxy (app, server, logs, { allowPrivateTargets = false, traffic } = {}) {
+export function installProxy (app, server, logs, { allowPrivateTargets = false, traffic, upgrade } = {}) {
   app.post('/proxy/http', (req, res) => {
     const ip = getClientIP(req, app);
     let url, meta, headers;
@@ -108,6 +108,7 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false, 
   server.on('upgrade', (req, socket, head) => {
     let target, headers, protocols;
     try {
+      if (upgrade?.(req, socket, head)) return;
       const local = new URL(req.url, 'http://localhost');
       if (local.pathname !== '/proxy/ws') throw new Error('Unknown upgrade route.');
       const meta = JSON.parse(Buffer.from(local.searchParams.get('meta') || '', 'base64url').toString());

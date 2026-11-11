@@ -3,11 +3,12 @@
 import { config } from '../../../scripts/managers.js';
 import { removeObjectWithId } from '../../../scripts/utilities.js';
 import { TabManager, HistoryManager } from './managers.js';
+import { displayURL, navigate } from './engines.js';
 
 const input = document.querySelector('input');
 
 let id = 0;
-const tabs = []; const proxyConfig = parent.currentProxy;
+const tabs = [];
 window.clickList = [];
 
 const tm = new TabManager();
@@ -34,7 +35,8 @@ export class Tab {
     img.height = '18';
     img.src = '/assets/loading.gif';
 
-    const iframe = this.#createIFrame(titleBtn, img);
+    const createFrame = this.#createFrame;
+    const iframe = createFrame(titleBtn, img);
 
     tabs.push({ iframe, id: _id });
 
@@ -48,13 +50,9 @@ export class Tab {
 
       removeObjectWithId(tabs, _id);
 
-      if (tabs.includes(window.clickList.at(-1))) {
-        tm.setActiveTab(window.clickList.at(-1));
-      } else if (tabs.at(-1)) {
-        tm.setActiveTab(tabs.at(-1));
-      } else {
-        return new Tab();
-      }
+      if (window.clickList[0] !== iframe) return;
+      if (tabs.length > 0) return tm.setActiveTab(tabs.at(-1).iframe);
+      return new Tab();
     };
 
     div.appendChild(img);
@@ -65,6 +63,10 @@ export class Tab {
     document.querySelector('main').append(iframe);
 
     tm.setActiveTab(iframe);
+    navigate(iframe, config.settings.get('search').url).catch(error => {
+      titleBtn.innerText = '接続できません';
+      window.dispatchEvent(new CustomEvent('flow-browser-navigation-error', { detail: error.message }));
+    });
   }
 
   /**
@@ -73,9 +75,9 @@ export class Tab {
    * @param {HTMLImageElement} img
    * @returns {HTMLIFrameElement}
    */
-  #createIFrame = (titleBtn, img) => {
+  #createFrame = (titleBtn, img) => {
     const iframe = document.createElement('iframe');
-    iframe.src = proxyConfig.prefix + proxyConfig.encodeUrl(config.settings.get('search').url);
+    iframe.addEventListener('flow-page', event => this.#updateTab(iframe, titleBtn, img, event.detail));
     iframe.id = id;
     iframe.onload = () => {
       this.#handleTab(iframe, titleBtn, img);
@@ -91,20 +93,16 @@ export class Tab {
     * @returns {void}
     */
   #handleTab = (iframe, titleBtn, img) => {
-    if (iframe.contentDocument.querySelector('#errorTitle')?.textContent === 'Error processing your request') {
+    const doc = iframe.contentDocument;
+    if (!doc || !doc.body) return;
+    const url = displayURL(iframe);
+    if (!url) return;
+    if (doc.querySelector('#errorTitle')?.textContent === 'Error processing your request' && window.clickList[0] === iframe) {
       window.dispatchEvent(new CustomEvent('flow-proxy-error'));
     }
+    this.#updateTab(iframe, titleBtn, img, { url, title: doc.title });
+    if (url.startsWith('flow:')) return;
     let open = false;
-    const url = proxyConfig.decodeUrl(new URL(iframe.contentWindow.location).pathname.replace(new RegExp(`${proxyConfig.prefix.replaceAll('/', '\\/')}`, 'g'), ''));
-
-    if (iframe.contentWindow.location.pathname.startsWith('/builtin/browser')) {
-      input.value = 'flow://' + url.split('/').pop().split('.')[0];
-    } else {
-      input.value = url;
-      history.add(iframe.contentWindow.location.href, iframe.contentDocument.title, `https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`);
-    }
-    titleBtn.innerText = `${iframe.contentDocument.title} `;
-    img.src = `https://s2.googleusercontent.com/s2/favicons?domain_url=${url}`;
 
     config.settings.get('search').urls.forEach((url) => {
       this.#injectJS(iframe, url, false, () => {});
@@ -133,6 +131,13 @@ export class Tab {
       this.#blockElement(iframe);
     };
   };
+
+  #updateTab (iframe, titleBtn, img, { url, title }) {
+    if (window.clickList[0] === iframe) input.value = url;
+    titleBtn.innerText = title || url;
+    img.src = '/assets/icons/browser.svg';
+    if (!url.startsWith('flow:')) history.add(url, title || url, img.src);
+  }
 
   /**
     * Injects JS code into the iFrame

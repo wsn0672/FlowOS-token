@@ -23,15 +23,16 @@
 
 		<div class="topnav tb">
 			<div>
-				<a style="padding: 5px 0" class="prev material-icons" onclick="clickList[0].contentWindow.history.back();">arrow_back</a>
+				<a style="padding: 5px 0" class="prev material-icons" onclick="browserAction('back');">arrow_back</a>
 			</div>
 			<div>
-				<a style="padding: 5px 0" class="forw material-icons" onclick="clickList[0].contentWindow.history.forward();">arrow_forward</a>
+				<a style="padding: 5px 0" class="forw material-icons" onclick="browserAction('forward');">arrow_forward</a>
 			</div>
 			<div>
-				<a style="padding: 5px 0" class="forw material-icons" onclick="clickList[0].contentWindow.location.reload();">refresh</a>
+				<a style="padding: 5px 0" class="forw material-icons" onclick="browserAction('reload');">refresh</a>
 			</div>
-			<input />
+			<input aria-label="アドレス" />
+			<span class="engine-badge"></span>
 			<div>
 				<a style="padding: 5px 0" class="more material-icons">more_vert</a>
 			</div>
@@ -46,7 +47,7 @@
 				<i class="material-icons">block</i>
 			  	Block Element
 			</a>
-			<a onclick="clickList[0].src = '/builtin/browser/history.html'">
+			<a onclick="goBrowser('/builtin/browser/history.html')">
 			    <i class="material-icons">history</i>
 			  	History
 			</a>

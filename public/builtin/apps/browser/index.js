@@ -1,9 +1,18 @@
-
 /* eslint-env browser */
 
 import { Tab } from './browser.js';
 
-const proxyConfig = parent.currentProxy;
+import { browserAction, engine, navigate } from './engines.js';
+
+document.querySelector('.engine-badge').textContent = engine;
+window.browserAction = action => browserAction(window.clickList[0], action);
+window.goBrowser = value => {
+  const frame = window.clickList[0];
+  if (!frame) return;
+  navigate(frame, value).catch(error => {
+    window.dispatchEvent(new CustomEvent('flow-browser-navigation-error', { detail: error.message }));
+  });
+};
 
 const input = document.querySelector('input');
 const dropdownBtn = document.querySelector('.more');
@@ -52,14 +61,15 @@ document.documentElement.addEventListener('click', () => {
 input.onkeydown = (e) => {
   if (e.key === 'Enter') {
     if (input.value.startsWith('flow:')) {
-      window.clickList[0].src = '/builtin/browser/' + input.value.split('://')[1] + '.html';
+      if (input.value === 'flow://history') window.goBrowser('/builtin/browser/history.html');
     } else {
-      let inputValue = input.value;
+      let inputValue = input.value.trim();
+      if (!inputValue) return;
 
       if (!inputValue.startsWith('http://') && !inputValue.startsWith('https://')) {
-        inputValue = 'http://' + inputValue;
+        inputValue = 'https://' + inputValue;
       }
-      window.clickList[0].src = proxyConfig.prefix + proxyConfig.encodeUrl(inputValue);
+      window.goBrowser(inputValue);
     }
   }
 };

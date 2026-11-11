@@ -2,10 +2,12 @@ import 'dotenv/config';
 import express from 'express';
 import { createProxyLogs } from './proxyLogs.js';
 import { installProxy } from './proxy.js';
+import { installRammerhead } from './rammerhead.js';
 import { createAdminApp } from './admin.js';
 import { configureClientIP, getClientIP } from './clientIP.js';
 import { createTraffic } from './traffic.js';
 
+import { scramjetPath } from '@mercuryworkshop/scramjet/path';
 import { uvPath } from '@titaniumnetwork-dev/ultraviolet';
 import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
 
@@ -24,6 +26,11 @@ const server = createServer({ maxHeaderSize: 65536 }, app);
 configureClientIP(app);
 const logs = createProxyLogs();
 const traffic = createTraffic({ directory: logs.root, assertStorage: logs.assertStorage });
+const rammerhead = installRammerhead(app, logs, traffic);
+app.get('/api/browser-engines', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ rammerheadOrigin: rammerhead?.origin });
+});
 app.get('/api/proxy-health', (req, res) => {
   res.set('Cache-Control', 'no-store');
   res.set('X-FlowOS-Health', 'ok');
@@ -33,11 +40,12 @@ app.get('/api/usage', (req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json(traffic.usage(getClientIP(req, app)));
 });
-installProxy(app, server, logs, { traffic });
+installProxy(app, server, logs, { traffic, upgrade: rammerhead?.upgrade });
 const adminServer = createServer(createAdminApp(logs, traffic));
 adminServer.listen(Number(process.env.ADMIN_PORT || 3744), process.env.ADMIN_HOST || '127.0.0.1');
 app.use('/', express.static(publicPath));
 app.use('/uv/', express.static(uvPath));
+app.use('/scramjet/assets/', express.static(scramjetPath));
 app.use('/baremux/', express.static(baremuxPath));
 
 // Add a route handler for the root path

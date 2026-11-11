@@ -353,3 +353,12 @@
 .browser-notice{color:var(--text-color);background:var(--window-bg);border:1px solid var(--primary);border-radius:16px;padding:30px;max-width:520px;width:calc(100% - 32px);box-shadow:0 24px 80px #0007}
 .browser-notice::backdrop{background:#0008;backdrop-filter:blur(8px)}.notice-eyebrow{font-size:11px;letter-spacing:.14em;color:var(--primary)}.browser-notice h2{font-size:23px;margin:18px 0}.browser-notice p{font-size:13px;line-height:1.9;opacity:.85}.notice-quota{background:var(--bar-bg);padding:14px;border-radius:8px}.notice-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;flex-wrap:wrap}.notice-actions button{padding:11px 14px;border:1px solid var(--surface-bg);border-radius:8px;background:var(--surface-bg);color:var(--text-color);font:inherit;font-size:12px;cursor:pointer}.notice-actions .primary-button{background:var(--primary);color:var(--desktop-bg)}
 @media(max-width:650px){.desktop-apps{display:grid;grid-template-columns:repeat(2,118px);align-content:center;gap:16px}.statusbar-giga{font-size:10px;gap:4px}.statusbar-giga progress{width:28px}.giga-symbol{display:none}.statusbar .left,.statusbar .middle{flex:0}.statusbar .right{flex:1}.notice-actions button{width:100%}}
+.browser-notice{max-height:calc(100% - 32px);overflow:auto}
+.notice-engines fieldset{margin:16px 0 0;padding:12px;border:1px solid var(--surface-bg);border-radius:8px}
+.notice-engines legend,.notice-engines label{font-size:13px}
+.notice-engines fieldset p{margin:0 0 8px}
+.notice-engines label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:3px 8px;padding:8px;border-radius:8px}
+.notice-engines label:has(input:checked){background:var(--surface-bg)}
+.notice-engines label:has(input:disabled){opacity:.6}
+.notice-engines small{grid-column:2;line-height:1.55}
+.notice-actions button:disabled{opacity:.55;cursor:not-allowed}

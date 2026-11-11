@@ -1,7 +1,7 @@
 /* eslint-env browser */
 /* global __uv$config, BareMux */
 
-import { SettingsCategory, SettingsInput, SettingsTextarea, SettingsDropdown } from './classes.js';
+import { SettingsCategory, SettingsInput, SettingsTextarea } from './classes.js';
 import { config } from './managers.js';
 import Logger from './logger.js';
 import { createProxyRecovery, watchProxyRecovery, withTimeout } from './proxy-recovery.js';
@@ -68,8 +68,7 @@ export const sleep = (ms) => {
 export const registerSettings = () => {
   const search = new SettingsCategory('search', 'ブラウザー', [
     new SettingsInput('url', '検索エンジンのURL', 'https://duckduckgo.com', 'https://duckduckgo.com'),
-    new SettingsTextarea('urls', '拡張スクリプトのURL（1行に1件）', 'https://mysite.to/script1.js\nhttps://mysite.to/script2.js\nhttps://mysite.to/script3.js', ''),
-    new SettingsDropdown('proxy', 'プロキシ', 'Ultraviolet', ['Ultraviolet', 'Dynamic'])
+    new SettingsTextarea('urls', '拡張スクリプトのURL（1行に1件）', 'https://mysite.to/script1.js\nhttps://mysite.to/script2.js\nhttps://mysite.to/script3.js', '')
   ]);
 
   const theme = new SettingsCategory('theme', 'テーマ', [

@@ -122,3 +122,5 @@ body > div > input {
 	opacity: 1;
   }
 .connection-status{padding:12px 14px;background:var(--surface-bg);border:1px solid var(--primary);border-radius:9px;margin:0 0 8px;font-size:12px;line-height:1.7}.connection-status[hidden]{display:none}.connection-status p{margin:0 0 8px}.connection-status>div{display:flex;gap:8px;flex-wrap:wrap}.connection-status button{font:inherit;font-size:11px;border:1px solid var(--primary);border-radius:5px;background:var(--window-bg);padding:6px 9px;cursor:pointer}.connection-status button:disabled{opacity:.5;cursor:wait}
+
+.engine-badge { font-size: .75em; white-space: nowrap; color: var(--primary); padding: 0 .5em; }

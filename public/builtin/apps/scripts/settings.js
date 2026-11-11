@@ -1,10 +1,46 @@
 /* eslint-env browser */
 
 import { config } from '../../../scripts/managers.js';
+import { browserEngines, engineDescription, getBrowserEngine, loadBrowserEngines, setBrowserEngine } from '../../../scripts/browser-engines.js';
 
 const valueLabels = new Map([['Celsius', '摂氏（℃）'], ['Fahrenheit', '華氏（℉）']]);
 
+async function showBrowserEngines (container) {
+  const form = document.createElement('form');
+  form.className = 'browser-engine-settings';
+  form.innerHTML = '<h2>プロキシエンジン</h2><label for="browser-engine">使用するエンジン</label><select id="browser-engine" aria-describedby="browser-engine-descriptions"><option value="">エンジンを選択</option></select><dl id="browser-engine-descriptions"></dl><p>変更は次に開くブラウザーに適用されます。ログイン状態はエンジン間で引き継がれません。</p><button type="submit" disabled>保存</button><span role="status"></span>';
+  container.append(form);
+  const select = form.querySelector('select');
+  const button = form.querySelector('button');
+  const descriptions = form.querySelector('dl');
+  const status = form.querySelector('[role="status"]');
+  const availability = await loadBrowserEngines();
+  for (const engine of browserEngines) {
+    const option = new Option(engine.label, engine.id);
+    option.disabled = engine.id === 'Rammerhead' && !availability.rammerheadOrigin;
+    select.add(option);
+    const name = document.createElement('dt');
+    name.textContent = engine.label;
+    const description = document.createElement('dd');
+    description.textContent = engineDescription(engine, availability);
+    descriptions.append(name, description);
+  }
+  select.value = getBrowserEngine() || '';
+  select.onchange = () => {
+    button.disabled = !select.value;
+    status.textContent = '';
+  };
+  form.onsubmit = event => {
+    event.preventDefault();
+    if (!select.value || select.selectedOptions[0].disabled) return;
+    setBrowserEngine(select.value);
+    button.disabled = true;
+    status.textContent = ' 保存しました。ブラウザーを開き直すと切り替わります。';
+  };
+}
+
 window.onload = () => {
+  showBrowserEngines(document.querySelector('#modules'));
   Object.values(parent.Flow.settings.items).forEach((setting) => {
     const section = document.createElement('form');
     section.classList.add(`settings-${setting.SETTING_ID}`);
