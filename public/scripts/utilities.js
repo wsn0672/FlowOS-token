@@ -39,15 +39,15 @@ export const registerSW = () => {
 
 export const recoverProxy = () => recovery ? recovery.recover() : Promise.resolve(false);
 
-export const loadCSS = (FILE_URL) => {
+export const loadCSS = (FILE_URL, doc = document) => {
   const startDate = new Date();
-  const styleEle = document.createElement('link');
+  const styleEle = doc.createElement('link');
 
   styleEle.setAttribute('rel', 'stylesheet');
   styleEle.setAttribute('type', 'text/css');
   styleEle.setAttribute('href', FILE_URL);
 
-  document.head.appendChild(styleEle);
+  doc.head.appendChild(styleEle);
 
   styleEle.addEventListener('load', () => {
     const nowDate = new Date();

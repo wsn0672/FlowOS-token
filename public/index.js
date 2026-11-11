@@ -43,3 +43,12 @@ searchBar.addEventListener('keyup', () => {
     item.style.display = item.innerText.toLowerCase().includes(input) ? 'flex' : 'none';
   });
 });
+
+window.addEventListener('storage', event => {
+  if (event.key === 'apps' || event.key === 'custom-apps') window.Flow.apps.register();
+  if (event.key === 'css') {
+    const style = document.querySelector('[flow-style]');
+    if (style) style.textContent = config.css.get();
+  }
+  if (['theme', 'modules', 'weather'].includes(event.key)) window.location.reload();
+});

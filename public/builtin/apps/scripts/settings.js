@@ -108,15 +108,4 @@ window.onload = () => {
   });
 };
 
-window.openCSS = () => {
-  console.log(parent);
-  parent.WinBox({
-    title: 'CSSエディター',
-    icon: 'assets/icons/text-editor.svg',
-    html: '<iframe src="/builtin/apps/css.html" scrolling="yes"></iframe>',
-    x: 'center',
-    y: 'center',
-    width: '400px',
-    height: '500px'
-  });
-};
+window.openCSS = () => parent.Flow.wm.open('css');

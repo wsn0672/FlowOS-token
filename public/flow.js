@@ -25,9 +25,10 @@ export default class FlowInstance {
   /**
    * Creates a FlowOS instance
    */
-  constructor () {
-    this.proxyReady = Promise.resolve(registerSW()).catch(error => logger.error(error));
-    this.setVersion();
+  constructor ({ proxy = true } = {}) {
+    this.proxyReady = proxy ? Promise.resolve(registerSW()).catch(error => logger.error(error)) : Promise.resolve(false);
+    const setVersion = this.setVersion;
+    this.versionReady = setVersion().catch(error => logger.error(error));
   }
 
   /**
@@ -193,7 +194,9 @@ export default class FlowInstance {
      * @returns {void}
      */
     register: () => {
-      document.querySelector('.spotlight .apps').innerHTML = '';
+      const list = document.querySelector('.spotlight .apps');
+      if (!list) return;
+      list.textContent = '';
       for (const [APP_ID, value] of Object.entries(apps())) {
         const appListItem = document.createElement('li');
         const icon = document.createElement('img');
