@@ -4,8 +4,14 @@ import { config } from '../../scripts/managers.js';
 import { BarItem, SettingsCategory, SettingsInput, SettingsDropdown } from '../../scripts/classes.js';
 
 const weather = new BarItem('weather', { position: 'left' });
+const weatherDefaultKey = 'flowos-weather-tokyo-v1';
+if (!localStorage.getItem(weatherDefaultKey)) {
+  const saved = config.settings.get('weather');
+  if (saved?.city === 'London') config.settings.set('weather', { ...saved, city: 'Tokyo' });
+  localStorage.setItem(weatherDefaultKey, 'done');
+}
 const weatherSettings = new SettingsCategory('weather', '天気', [
-  new SettingsInput('city', '都市名', 'London', 'London'),
+  new SettingsInput('city', '都市名', 'Tokyo', 'Tokyo'),
   new SettingsDropdown('measurement', '温度の単位', 'Celsius', ['Celsius', 'Fahrenheit'])
 ]);
 window.weatherSettings = () => weatherSettings;
