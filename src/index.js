@@ -29,7 +29,10 @@ const traffic = createTraffic({ directory: logs.root, assertStorage: logs.assert
 const rammerhead = installRammerhead(app, logs, traffic);
 app.get('/api/browser-engines', (req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json({ rammerheadOrigin: rammerhead?.origin });
+  res.json({
+    engines: ['Ultraviolet', 'Scramjet', 'Rammerhead'],
+    rammerheadOrigin: rammerhead?.origin ?? null
+  });
 });
 app.get('/api/proxy-health', (req, res) => {
   res.set('Cache-Control', 'no-store');
@@ -43,10 +46,18 @@ app.get('/api/usage', (req, res) => {
 installProxy(app, server, logs, { traffic, upgrade: rammerhead?.upgrade });
 const adminServer = createServer(createAdminApp(logs, traffic));
 adminServer.listen(Number(process.env.ADMIN_PORT || 3744), process.env.ADMIN_HOST || '127.0.0.1');
-app.use('/', express.static(publicPath));
-app.use('/uv/', express.static(uvPath));
-app.use('/scramjet/assets/', express.static(scramjetPath));
-app.use('/baremux/', express.static(baremuxPath));
+const runtimeAssets = {
+  setHeaders (res, file) {
+    // Keep the UI and the proxy runtime on the same release across deploys.
+    if (!file.includes('/builtin/apps/games/') && /\.(?:html|[cm]?js|css|wasm)$/i.test(file)) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  }
+};
+app.use('/', express.static(publicPath, runtimeAssets));
+app.use('/uv/', express.static(uvPath, runtimeAssets));
+app.use('/scramjet/assets/', express.static(scramjetPath, runtimeAssets));
+app.use('/baremux/', express.static(baremuxPath, runtimeAssets));
 
 // Add a route handler for the root path
 app.get('/', (req, res) => {
@@ -55,11 +66,13 @@ app.get('/', (req, res) => {
 
 app.get('/uv/uv.config.js', (req, res) => {
   res
+    .set('Cache-Control', 'no-store')
     .type('text/javascript')
     .send(fs.readFileSync(`${publicPath}/uv/uv.config.js`));
 });
 
 app.get('/ver', (req, res) => {
+  res.set('Cache-Control', 'no-store');
   exec('git rev-parse HEAD', (err1, hash) => {
     exec('git branch --show-current', (err2, branch) => {
       exec('git ls-remote --get-url', (err3, url) => {

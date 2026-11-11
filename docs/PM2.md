@@ -250,3 +250,29 @@ Rammerheadのセッションはサーバーのメモリーに置く。ウィン�
 Rammerheadのnpmパッケージには、今回使っていないクラスタ起動用の依存
 `sticky-session-custom` が含まれ、`npm audit --omit=dev` ではその配下の `ip` が検出される。
 FlowOSはRammerheadのクラスタ起動機能を読み込まず、接続先のIPはFlowOS側で検証する。
+
+### 更新後も設定に Dynamic が出る場合
+
+`Dynamic` があるのは3エンジン追加前の画面。環境変数の設定に関係なく、新しい版は
+Ultraviolet・Scramjet・Rammerheadの3件を表示する。Rammerheadのホストが未設定なら
+3件目が無効になる。
+
+Ubuntuで `pm2 describe flowos` の `exec cwd` を確認し、そのディレクトリで更新する。
+
+```sh
+git pull --ff-only origin main
+npm ci --omit=dev
+pm2 restart ecosystem.config.cjs --update-env
+pm2 save
+git rev-parse --short HEAD
+curl -fsS http://127.0.0.1:3743/ver
+curl -fsS http://127.0.0.1:3743/api/browser-engines
+```
+
+3エンジンの追加コミットは `e94361b`。公開URLでも `/ver` と `/api/browser-engines`
+を開き、ローカルの応答と一致することを確認する。`/api/browser-engines` がローカルで
+JSON、公開URLで404なら、Cloudflare Tunnelの接続先を確認する。公開URLのAPIが新しくても
+画面に旧メニューが出る場合は、Cloudflareで `/scripts/utilities.js` と
+`/builtin/apps/scripts/settings.js` のキャッシュをURL指定で削除してから再読み込みする。
+サイトデータ全体の削除は不要。アプリは更新時の混在を防ぐため、画面・スクリプト・プロキシ本体を
+`Cache-Control: no-store` で返す。上書きするCloudflare Cache Ruleがあれば対象から外す。
