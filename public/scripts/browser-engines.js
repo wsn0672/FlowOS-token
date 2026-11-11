@@ -1,8 +1,8 @@
 /* eslint-env browser */
 export const browserEngines = [
-  { id: 'Ultraviolet', label: 'A · Ultraviolet', description: 'FlowOSでこれまで使ってきた方式です。普段使いや比較の基準に向いています。' },
-  { id: 'Scramjet', label: 'B · Scramjet', description: '新しい書き換え方式です。動的なサイトを試す候補ですが、一部の機能は動作しない場合があります。' },
-  { id: 'Rammerhead', label: 'C · Rammerhead', description: 'サーバー側でページを書き換える方式です。ほかの方式で開けないサイトを試せます。Googleログインには対応していません。' }
+  { id: 'Ultraviolet', label: 'A · Ultraviolet', description: 'FlowOSでこれまで使ってきた方式です。旧型で、非推奨です。' },
+  { id: 'Scramjet', label: 'B · Scramjet', description: '新しい書き換え方式です。動的なwebサイトでの表示成功率が高いです。一部の機能は動作しない場合があります。' },
+  { id: 'Rammerhead', label: 'C · Rammerhead', description: 'サーバー側でページを書き換える方式です。ほかの方式で開けないサイトを開ける可能性があります。' }
 ];
 
 const KEY = 'flowos-browser-engine';
