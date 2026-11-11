@@ -342,7 +342,43 @@
 	display: none;
 }
 /* Desktop shortcuts share the current FlowOS theme. */
-.desktop-apps{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:24px;pointer-events:none;padding:60px 16px 110px;z-index:0}
+.desktop-home {
+  position: absolute;
+  inset: 58px 12px 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  overflow: auto;
+  padding: 12px 4px;
+}
+
+.desktop-apps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: auto;
+}
+
+.desktop-announcement {
+  width: min(100%, 550px);
+  margin-bottom: auto;
+  padding: 16px 20px;
+  border: 1px solid var(--surface-bg);
+  border-radius: 16px;
+  background: var(--bar-bg);
+  color: var(--text-color);
+  overflow-wrap: anywhere;
+}
+
+.desktop-announcement h2 { margin: 0 0 .6rem; font-size: 1rem; }
+.announcement-content { font-size: .875rem; line-height: 1.65; }
+.announcement-content > :first-child { margin-top: 0; }
+.announcement-content > :last-child { margin-bottom: 0; }
+.announcement-content a { color: var(--primary); }
+.announcement-content img { max-width: 100%; height: auto; }
+.announcement-content pre { overflow: auto; }
 .desktop-apps button{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:14px;width:118px;padding:24px 10px;border:1px solid transparent;border-radius:18px;background:var(--bar-bg);color:var(--text-color);font:inherit;font-size:14px;cursor:pointer;transition:transform .2s,background .2s,border-color .2s}
 .desktop-apps button:hover,.desktop-apps button:focus-visible{background:var(--surface-bg);border-color:var(--primary);transform:translateY(-4px);outline:none}
 .desktop-apps img{width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 5px 8px #0003)}

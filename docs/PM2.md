@@ -281,3 +281,13 @@ JSON、公開URLで404なら、Cloudflare Tunnelの接続先を確認する。�
 `/builtin/apps/scripts/settings.js` のキャッシュをURL指定で削除してから再読み込みする。
 サイトデータ全体の削除は不要。アプリは更新時の混在を防ぐため、画面・スクリプト・プロキシ本体を
 `Cache-Control: no-store` で返す。上書きするCloudflare Cache Ruleがあれば対象から外す。
+
+### 管理者からのお知らせ
+
+ホームの「管理者からのお知らせ」は、既定ではリポジトリ直下の `announcement.md` を表示する。
+見出し、リスト、リンクなどをMarkdownで書ける。ファイルを保存するとホームの再読み込みで反映される。
+ファイルの編集だけならPM2の再起動は不要。
+
+Gitで管理するファイルにサーバー上の編集を残したくない場合は、`.env` の
+`ANNOUNCEMENT_FILE` に別のMarkdownファイルの絶対パスを設定して、初回だけFlowOSを再起動する。
+その後は指定したファイルを編集する。

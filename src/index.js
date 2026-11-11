@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import MarkdownIt from 'markdown-it';
+import { fileURLToPath } from 'node:url';
 import { createProxyLogs } from './proxyLogs.js';
 import { installProxy } from './proxy.js';
 import { installRammerhead } from './rammerhead.js';
@@ -17,6 +19,8 @@ import { createServer } from 'http';
 import fs from 'fs';
 
 const publicPath = './public';
+const announcementPath = process.env.ANNOUNCEMENT_FILE || fileURLToPath(new URL('../announcement.md', import.meta.url));
+const markdown = new MarkdownIt({ html: false });
 
 const port = process.env.PORT || 3743;
 
@@ -33,6 +37,17 @@ app.get('/api/browser-engines', (req, res) => {
     engines: ['Ultraviolet', 'Scramjet', 'Rammerhead'],
     rammerheadOrigin: rammerhead?.origin ?? null
   });
+});
+app.get('/api/announcement', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const source = await fs.promises.readFile(announcementPath, 'utf8');
+    res.json({ html: markdown.render(source) });
+  } catch (error) {
+    if (error.code === 'ENOENT') return res.json({ html: '' });
+    console.error('Could not read FlowOS announcement:', error.code);
+    res.sendStatus(503);
+  }
 });
 app.get('/api/proxy-health', (req, res) => {
   res.set('Cache-Control', 'no-store');

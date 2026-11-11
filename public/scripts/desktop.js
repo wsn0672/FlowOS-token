@@ -85,7 +85,25 @@ export function initDesktop (flow) {
     button.onclick = () => flow.wm.open(id);
     launcher.append(button);
   }
-  document.querySelector('.container').prepend(launcher);
+  document.querySelector('.desktop-home').prepend(launcher);
+  const announcement = document.querySelector('.announcement-content');
+  fetch('/api/announcement', { cache: 'no-store', signal: AbortSignal.timeout(8000) })
+    .then(response => {
+      if (!response.ok) throw new Error('Announcement unavailable.');
+      return response.json();
+    })
+    .then(({ html }) => {
+      if (!html.trim()) {
+        announcement.textContent = '現在、お知らせはありません。';
+        return;
+      }
+      announcement.innerHTML = html;
+      for (const link of announcement.querySelectorAll('a')) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
+    })
+    .catch(() => { announcement.textContent = 'お知らせを読み込めませんでした。'; });
   const meter = document.createElement('button');
   meter.type = 'button';
   meter.className = 'statusbar-item statusbar-giga';
