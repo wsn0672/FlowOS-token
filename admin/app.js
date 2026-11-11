@@ -1,5 +1,6 @@
 /* eslint-env browser */
 const day = document.querySelector('#day');
+const zone = document.querySelector('#zone');
 const ip = document.querySelector('#ip');
 const filter = document.querySelector('#filter');
 const records = document.querySelector('#records');
@@ -8,7 +9,8 @@ const older = document.querySelector('#older');
 let entries = [];
 let before = null;
 let generation = 0;
-day.value = new Date().toISOString().slice(0, 10);
+const today = () => new Date(Date.now() + (zone.value === 'JST' ? 9 * 3600000 : 0)).toISOString().slice(0, 10);
+day.value = today();
 async function api (path) {
   const response = await fetch(path, { cache: 'no-store' });
   if (!response.ok) throw new Error('ログを読み込めませんでした。');
@@ -45,7 +47,7 @@ async function load (append = false) {
   if (!append) { entries = []; before = null; render(); }
   if (!ip.value) return;
   status.textContent = '読み込み中…';
-  const query = new URLSearchParams({ day: day.value, ip: ip.value });
+  const query = new URLSearchParams({ day: day.value, zone: zone.value, ip: ip.value });
   if (append && before !== null) query.set('before', before);
   try {
     const result = await api('/api/logs?' + query);
@@ -56,12 +58,12 @@ async function load (append = false) {
   } catch (error) { if (current === generation) status.textContent = error.message; }
 }
 async function refresh () {
-  ++generation;
+  const current = ++generation;
   const selectedDay = day.value;
   const selectedIP = ip.value;
   try {
-    const users = await api('/api/users?' + new URLSearchParams({ day: selectedDay }));
-    if (selectedDay !== day.value) return;
+    const users = await api('/api/users?' + new URLSearchParams({ day: selectedDay, zone: zone.value }));
+    if (current !== generation) return;
     ip.replaceChildren();
     for (const value of users) {
       const option = document.createElement('option');
@@ -71,8 +73,9 @@ async function refresh () {
     if (users.includes(selectedIP)) ip.value = selectedIP;
     await load();
     if (!users.length) status.textContent = 'この日のログはまだありません。';
-  } catch (error) { status.textContent = error.message; }
+  } catch (error) { if (current === generation) status.textContent = error.message; }
 }
+zone.addEventListener('change', () => { day.value = today(); refresh(); });
 day.addEventListener('change', refresh);
 ip.addEventListener('change', () => load());
 filter.addEventListener('input', render);

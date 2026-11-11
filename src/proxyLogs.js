@@ -6,7 +6,7 @@ export function safeHeaders (headers) {
     /cookie|authorization|token|api[-_]key|secret/i.test(key) ? '[REDACTED]' : value]));
 }
 
-export function createProxyLogs (directory) {
+export function createProxyLogs (directory, { now = Date.now } = {}) {
   const root = resolve(directory || process.env.PROXY_LOG_DIR || '/mnt/timemachine/flowos-logs');
   const requireMount = !directory && !process.env.PROXY_LOG_DIR && process.platform === 'linux';
   if (requireMount) {
@@ -17,16 +17,18 @@ export function createProxyLogs (directory) {
   mkdirSync(root, { recursive: true, mode: 0o700 });
   const mountDevice = requireMount ? statSync('/mnt/timemachine').dev : null;
   const ipFile = ip => Buffer.from(ip).toString('base64url') + '.jsonl';
-  function dayPath (day) {
+  function dayPath (day, zone = 'JST') {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('Invalid date.');
-    return join(root, day);
+    if (zone === 'UTC') return join(root, day);
+    if (zone !== 'JST') throw new Error('Invalid timezone.');
+    return join(root, 'jst', day);
   }
   function assertStorage () {
     if (requireMount && statSync('/mnt/timemachine').dev !== mountDevice) throw new Error('Log storage was unmounted.');
   }
   function write (ip, entry) {
     assertStorage();
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date(now() + 9 * 3600000).toISOString().replace(/Z$/, '+09:00');
     const folder = dayPath(timestamp.slice(0, 10));
     mkdirSync(folder, { recursive: true, mode: 0o700 });
     // Explicit allowlist: never serialize request objects or bodies.
@@ -44,19 +46,19 @@ export function createProxyLogs (directory) {
     };
     appendFileSync(join(folder, ipFile(ip)), JSON.stringify(record) + '\n', { mode: 0o600 });
   }
-  function users (day) {
+  function users (day, zone) {
     try {
-      return readdirSync(dayPath(day)).filter(name => /^[\w-]+\.jsonl$/.test(name))
+      return readdirSync(dayPath(day, zone)).filter(name => /^[\w-]+\.jsonl$/.test(name))
         .map(name => Buffer.from(name.slice(0, -6), 'base64url').toString()).sort();
     } catch (error) {
       if (error.code === 'ENOENT') return [];
       throw error;
     }
   }
-  function read (day, ip, before) {
+  function read (day, ip, before, zone) {
     let fd;
     try {
-      fd = openSync(join(dayPath(day), ipFile(ip)), 'r');
+      fd = openSync(join(dayPath(day, zone), ipFile(ip)), 'r');
       const size = fstatSync(fd).size;
       const end = before === undefined ? size : Number(before);
       if (!Number.isSafeInteger(end) || end < 0 || end > size) throw new Error('Invalid cursor.');

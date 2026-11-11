@@ -62,12 +62,12 @@ test('server transport forwards HTTP/WS, records metadata only and serves the IP
   });
   assert.equal(traffic.usage('127.0.0.1').totalBytes, Buffer.byteLength('private-request-body') + Buffer.byteLength('private-response-body') + 2 * Buffer.byteLength('private-websocket-payload'));
   assert.equal(traffic.usage('127.0.0.1').requests, 2);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = trafficDay();
   assert.deepEqual(logs.users(today), ['127.0.0.1']);
   const records = logs.read(today, '127.0.0.1').records;
   assert.ok(records.some(entry => entry.type === 'http-request' && entry.method === 'POST'));
   assert.ok(records.some(entry => entry.type === 'websocket-response' && entry.status === 101));
-  const serialized = readdirSync(join(directory, today)).map(file => readFileSync(join(directory, today, file), 'utf8')).join('');
+  const serialized = readdirSync(join(directory, 'jst', today)).map(file => readFileSync(join(directory, 'jst', today, file), 'utf8')).join('');
   for (const secret of ['private-request-body', 'private-response-body', 'private-websocket-payload', 'secret-token', 'private-cookie', 'secret-cookie']) assert.ok(!serialized.includes(secret), secret);
   assert.match(serialized, /REDACTED/);
   const reloaded = createProxyLogs(directory);

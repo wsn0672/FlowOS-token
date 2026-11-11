@@ -18,10 +18,10 @@ export function createAdminApp (logs, traffic) {
     if (req.query.ip !== undefined && (typeof req.query.ip !== 'string' || req.query.ip.length > 64)) return res.sendStatus(400);
     res.json(traffic.statistics(String(req.query.day || ''), req.query.ip));
   });
-  app.get('/api/users', (req, res) => res.json(logs.users(String(req.query.day || ''))));
+  app.get('/api/users', (req, res) => res.json(logs.users(String(req.query.day || ''), req.query.zone)));
   app.get('/api/logs', (req, res) => {
     if (typeof req.query.ip !== 'string' || req.query.ip.length > 64) return res.sendStatus(400);
-    res.json(logs.read(String(req.query.day || ''), req.query.ip, req.query.before));
+    res.json(logs.read(String(req.query.day || ''), req.query.ip, req.query.before, req.query.zone));
   });
   app.use(express.static(fileURLToPath(new URL('../admin/', import.meta.url))));
   app.use((error, req, res, next) => {
