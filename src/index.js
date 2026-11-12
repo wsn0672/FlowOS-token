@@ -71,6 +71,10 @@ const runtimeAssets = {
 };
 app.use('/', express.static(publicPath, runtimeAssets));
 app.use('/uv/', express.static(uvPath, runtimeAssets));
+app.get('/scramjet/psl.js', (req, res) => {
+  res.set('Cache-Control', 'no-store').type('text/javascript')
+    .sendFile(fileURLToPath(new URL('./psl.umd.cjs', import.meta.resolve('psl'))));
+});
 app.use('/scramjet/assets/', express.static(scramjetPath, runtimeAssets));
 app.use('/baremux/', express.static(baremuxPath, runtimeAssets));
 

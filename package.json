@@ -26,6 +26,7 @@
 		"markdown-it": "15.0.3",
 		"memory-cache": "^0.2.0",
 		"mime-types": "^3.0.0",
+		"psl": "1.15.0",
 		"rammerhead": "1.2.64",
 		"uglify-js": "^3.17.4",
 		"ws": "^8.22.2"
