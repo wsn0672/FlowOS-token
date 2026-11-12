@@ -1,4 +1,7 @@
 /* eslint-env browser */
+import { engine } from './engines.js';
+import { ensureScramjetWorker, initScramjet } from '../../../scripts/scramjet.js';
+import { isProxyError } from './proxy-error.js';
 const banner = document.querySelector('#connection-status');
 const message = banner.querySelector('p');
 const reconnect = banner.querySelector('[data-action="reconnect"]');
@@ -8,7 +11,7 @@ let hadFailure = false;
 function activeError () {
   try {
     const frame = window.clickList?.[0];
-    return frame?.contentDocument?.querySelector('#errorTitle')?.textContent === 'Error processing your request';
+    return isProxyError(frame?.contentDocument);
   } catch { return false; }
 }
 function show (detail) {
@@ -34,7 +37,20 @@ function show (detail) {
 const onStatus = event => show(event.detail);
 parent.addEventListener('flow-proxy-status', onStatus);
 window.addEventListener('pagehide', () => parent.removeEventListener('flow-proxy-status', onStatus), { once: true });
-reconnect.onclick = () => parent.Flow.recoverProxy();
+async function recover () {
+  if (engine === 'Scramjet') {
+    show({ status: 'checking' });
+    try {
+      await initScramjet();
+      await ensureScramjetWorker();
+    } catch {
+      show({ status: 'unavailable' });
+      return;
+    }
+  }
+  await parent.Flow.recoverProxy();
+}
+reconnect.onclick = recover;
 reload.onclick = () => {
   const frame = window.clickList?.[0];
   if (frame && window.confirm('このタブを再読み込みしますか？入力中の内容や送信済みフォームを確認してください。')) window.browserAction('reload');
@@ -43,7 +59,7 @@ dismiss.onclick = () => { banner.hidden = true; };
 window.addEventListener('flow-proxy-error', () => {
   hadFailure = true;
   show({ status: 'unavailable' });
-  parent.Flow.recoverProxy();
+  recover();
 });
 if (parent.flowProxyStatus) show(parent.flowProxyStatus);
 

@@ -4,6 +4,7 @@ import { config } from '../../../scripts/managers.js';
 import { removeObjectWithId } from '../../../scripts/utilities.js';
 import { TabManager, HistoryManager } from './managers.js';
 import { displayURL, navigate } from './engines.js';
+import { isProxyError } from './proxy-error.js';
 
 const input = document.querySelector('input');
 
@@ -97,7 +98,7 @@ export class Tab {
     if (!doc || !doc.body) return;
     const url = displayURL(iframe);
     if (!url) return;
-    if (doc.querySelector('#errorTitle')?.textContent === 'Error processing your request' && window.clickList[0] === iframe) {
+    if (isProxyError(doc) && window.clickList[0] === iframe) {
       window.dispatchEvent(new CustomEvent('flow-proxy-error'));
     }
     this.#updateTab(iframe, titleBtn, img, { url, title: doc.title });

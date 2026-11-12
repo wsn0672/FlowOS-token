@@ -78,6 +78,9 @@ export function installProxy (app, server, logs, { allowPrivateTargets = false, 
         res.set('x-flowos-response', Buffer.from(JSON.stringify(metadata)).toString('base64url'));
         res.set('content-type', 'application/octet-stream');
         res.set('cache-control', 'no-store');
+        // A stalled or rate-limited body must not trigger the client's
+        // response-header timeout and cause the entire request to be retried.
+        res.flushHeaders();
         const streams = [response];
         if (decoder && meta.method.toUpperCase() !== 'HEAD') streams.push(decoder);
         if (traffic) streams.push(traffic.stream(ip, url, 'download', controller.signal));
